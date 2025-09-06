@@ -1,0 +1,29 @@
+import fasttext
+
+class LanguageFilter:
+    def __init__(self, model_path: str, allowed_lang: str = "en"):
+        self.model = fasttext.load_model(model_path)
+        self.allowed_lang = allowed_lang
+
+    def is_allowed(self, text: str) -> bool:
+        """Check if text is in the allowed language."""
+        if not text.strip():
+            return False
+        prediction = self.model.predict(text.replace("\n", " ")[:500])
+        lang = prediction[0][0].replace("__label__", "")
+        return lang == self.allowed_lang
+
+    def filter_dataset(self, records):
+        """Filter a list of text records by language."""
+        return [r for r in records if self.is_allowed(r)]
+        
+
+if __name__ == "__main__":
+    # Example usage
+    lang_filter = LanguageFilter("lid.176.ftz", allowed_lang="en")
+    samples = [
+        "This is an English sentence.",
+        "Ceci est une phrase française.",
+        "Hola, ¿cómo estás?"
+    ]
+    print("Allowed samples:", lang_filter.filter_dataset(samples))
